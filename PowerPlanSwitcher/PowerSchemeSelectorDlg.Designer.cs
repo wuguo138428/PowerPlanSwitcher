@@ -36,22 +36,23 @@ namespace PowerPlanSwitcher
             // 
             this.TlpPowerSchemes.ColumnCount = 1;
             this.TlpPowerSchemes.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
-            this.TlpPowerSchemes.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
             this.TlpPowerSchemes.Dock = System.Windows.Forms.DockStyle.Fill;
             this.TlpPowerSchemes.Location = new System.Drawing.Point(0, 0);
             this.TlpPowerSchemes.Margin = new System.Windows.Forms.Padding(0);
             this.TlpPowerSchemes.Name = "TlpPowerSchemes";
             this.TlpPowerSchemes.RowCount = 1;
             this.TlpPowerSchemes.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
-            this.TlpPowerSchemes.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
             this.TlpPowerSchemes.Size = new System.Drawing.Size(569, 344);
             this.TlpPowerSchemes.TabIndex = 0;
             // 
             // Popup
             // 
+            this.Padding = new Padding(1);
+            this.BackColor = Color.FromArgb(0xC8, 0xC8, 0xC8);
+            //this.BackColor = System.Drawing.Color.Black;
+            //this.BackColor = SystemColors.Control;
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.BackColor = System.Drawing.Color.Black;
             this.ClientSize = new System.Drawing.Size(569, 344);
             this.Controls.Add(this.TlpPowerSchemes);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
