@@ -1,10 +1,7 @@
-using System;
-using System.Diagnostics;
-using System.Runtime.InteropServices;
-using System.Windows.Forms;
-
-namespace PowerPlanSwitcher // 确保这里是您的命名空间
+namespace PowerPlanSwitcher
 {
+    using System.Diagnostics;
+    using System.Runtime.InteropServices;
     public class HotKey
     {
         private const int WH_KEYBOARD_LL = 13;
@@ -30,36 +27,13 @@ namespace PowerPlanSwitcher // 确保这里是您的命名空间
 
         private static Guid[] powerPlanGuids;
         private static int currentPlanIndex = 0;
-
-        // 初始化电源计划GUID数组
-        public static void HotKeyGuid()
-        {
-                List<Guid> powerPlanGuidsList = new List<Guid>();
-
-                // 遍历电源计划
-                foreach (var (guid, name) in PowerManager.GetPowerSchemes())
-                {
-                    var setting = PowerSchemeSettings.GetSetting(guid);
-                    if (setting is not null && !setting.Visible)
-                    {
-                        continue; // 跳过不可见的电源计划设置
-                    }
-
-                    // 将guid添加到列表中
-                    powerPlanGuidsList.Add(guid);
-                }
-
-                // 将列表转换为数组
-                powerPlanGuids = null;
-                powerPlanGuids = powerPlanGuidsList.ToArray();
-        }
-
+        
         public static void StartListening()
         {
             _hookID = SetHook(_proc);
         }
 
-        public static void StopListening()
+        private static void StopListening()
         {
             UnhookWindowsHookEx(_hookID);
         }
@@ -86,6 +60,41 @@ namespace PowerPlanSwitcher // 确保这里是您的命名空间
             }
             return CallNextHookEx(_hookID, nCode, wParam, lParam);
         }
+        
+        // 初始化电源计划GUID数组
+        public static void HotKeyGuid()
+        {
+            List<Guid> powerPlanGuidsList = new List<Guid>();
+
+            // 遍历电源计划
+            foreach (var (guid, name) in PowerManager.GetPowerSchemes())
+            {
+                var setting = PowerSchemeSettings.GetSetting(guid);
+                if (setting is not null && !setting.Visible)
+                {
+                    continue; // 跳过不可见的电源计划设置
+                }
+
+                // 将guid添加到列表中
+                powerPlanGuidsList.Add(guid);
+            }
+
+            // 将列表转换为数组
+            powerPlanGuids = null;
+            powerPlanGuids = powerPlanGuidsList.ToArray();
+            currentPlanIndex = powerPlanGuids.Length -1 ;
+        }
+        
+        // private static void SetCurrentPlanIndexIfGuidExists(Guid[] powerPlanGuids, ref int currentPlanIndex, Guid targetGuid)
+        // {
+            // int index = powerPlanGuids.ToList().FindIndex(guid => guid.Equals(targetGuid));
+            // if (index != -1)
+            // {
+                // // 如果找到了Guid，设置currentPlanIndex为找到的索引
+                // currentPlanIndex = index;
+            // }
+            // // 如果没有找到Guid，currentPlanIndex保持不变
+        // }
 
         private static void SwitchPowerPlan()
         {
