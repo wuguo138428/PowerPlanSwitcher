@@ -5,6 +5,40 @@ namespace PowerPlanSwitcher
 
     public partial class SettingsDlg : Form
     {
+        private (bool SDListAC, bool SDListBattery) SDListTwoBool()
+        {
+            // 根据实际情况确定这两个布尔值的来源
+            bool SDListAC = false; // 这里是您想要传递的布尔值
+            bool SDListBattery = false;
+
+            for (int index = 0; index < DgvPowerRules.Rows.Count; index++)
+            {
+                var row = DgvPowerRules.Rows[index].Cells[1].Value;
+                // 检查第二列（索引为1）的单元格是否包含"Power AC"
+                if (row != null && DgvPowerRules.Rows[index].Cells[1].Value.ToString().Contains("Power AC"))
+                {
+                    SDListAC = true; // 如果找到，设置标记为true
+                }
+                if (row != null && row.ToString().Contains("Battery"))
+                {
+                    SDListBattery = true; // 如果找到，设置标记为true
+                }
+                if (SDListAC && SDListBattery)
+                {
+                    break;
+                }
+            }
+            return (SDListAC,SDListBattery);
+            // bool SDListAC = DgvPowerRules.Rows.Cast<DataGridViewRow>()
+                // .Any(row => row.Cells[1].Value != null && row.Cells[1].Value.ToString().Contains("Power AC"));
+
+            // bool SDListBattery = DgvPowerRules.Rows.Cast<DataGridViewRow>()
+                // .Any(row => row.Cells[1].Value != null && row.Cells[1].Value.ToString().Contains("Battery"));
+
+            // return (SDListAC, SDListBattery);
+            
+        }
+        
         private readonly List<(Guid guid, string name)> powerSchemes =
             PowerManager.GetPowerSchemes()
                 .Where(scheme => !string.IsNullOrWhiteSpace(scheme.name))
@@ -193,7 +227,7 @@ namespace PowerPlanSwitcher
             }
         }
 
-        private void HandleBtnOkClick(object sender, EventArgs e)
+        async void HandleBtnOkClick(object sender, EventArgs e)
         {
             foreach (DataGridViewRow row in DgvPowerSchemes.Rows)
             {
@@ -205,13 +239,13 @@ namespace PowerPlanSwitcher
                         Icon = row.Cells[2].Value as Image,
                     });
             }
-            PowerSchemeSettings.SaveSettings();
+            // PowerSchemeSettings.SaveSettings();
 
             PowerRule.SetPowerRules(DgvPowerRules.Rows
                 .Cast<DataGridViewRow>()
                 .Select(r => r.Tag as PowerRule)
                 .Cast<PowerRule>());
-            PowerRule.SavePowerRules();
+            // PowerRule.SavePowerRules();
 
             static string GetSelectedString(ComboBox cmb) =>
                 cmb.Items[cmb.SelectedIndex]?.ToString() ?? string.Empty;
@@ -230,9 +264,17 @@ namespace PowerPlanSwitcher
             Settings.Default.ColorTheme = CmbColorTheme.SelectedItem as string;
 
             Settings.Default.Save();
+            
+            await Task.Run(() =>
+            {
+                PowerSchemeSettings.SaveSettings();
+                PowerRule.SavePowerRules();
+                HotKey.HotKeyGuid(); // 将耗时操作放在这里
+                BatteryMonitor.PlanValue();
+                BatteryMonitor.MonitorBatterySwitc();
+            });
 
             DialogResult = DialogResult.OK;
-            HotKey.HotKeyGuid();
         }
 
         private void HandleBtnCreateRuleFromProcessClick(
@@ -244,8 +286,11 @@ namespace PowerPlanSwitcher
             {
                 return;
             }
+            
+            var (value1, value2) = SDListTwoBool();
+            bool SDNotEdit = true;
 
-            using var powerRuleDlg = new PowerRuleDlg
+            using var powerRuleDlg = new PowerRuleDlg(value1, value2, SDNotEdit)
             {
                 PowerRule = new PowerRule
                 {
@@ -305,7 +350,11 @@ namespace PowerPlanSwitcher
 
         private void HandleBtnAddPowerRuleClick(object sender, EventArgs e)
         {
-            using var dlg = new PowerRuleDlg();
+            var (value1, value2) = SDListTwoBool();
+            bool SDNotEdit = true;
+            
+            using var dlg = new PowerRuleDlg(value1, value2, SDNotEdit); // 通过构造函数传递布尔值
+            // using var dlg = new PowerRuleDlg();
             if (dlg.ShowDialog() != DialogResult.OK)
             {
                 return;
@@ -321,8 +370,12 @@ namespace PowerPlanSwitcher
             {
                 return;
             }
-
-            using var dlg = new PowerRuleDlg
+            
+            var (value1, value2) = SDListTwoBool();
+            bool SDNotEdit = false;
+            // DgvPowerRules.Rows[index].Cells[1].Value.ToString()
+            
+            using var dlg = new PowerRuleDlg(value1, value2, SDNotEdit)
             {
                 PowerRule = DgvPowerRules.SelectedRows[0].Tag as PowerRule,
             };
@@ -408,5 +461,10 @@ namespace PowerPlanSwitcher
             EventArgs e) =>
             CmbInitialPowerScheme.Enabled =
                 ChbActivateInitialPowerScheme.Checked;
+
+        private void DgvPowerRules_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+
+        }
     }
 }
